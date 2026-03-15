@@ -31,17 +31,17 @@ public static class EndpointExtensions
     /// Maps the endpoints implementing <see cref = "IEndpoint" /> to the endpoint route builder.
     /// </summary>
     /// <returns>The endpoint route builder.</returns>
-    public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder app)
+    public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder endpointRouteBuilder)
     {
-        ArgumentNullException.ThrowIfNull(app);
+        ArgumentNullException.ThrowIfNull(endpointRouteBuilder);
 
-        var endpoints = app.ServiceProvider.GetServices<IEndpoint>();
+        var endpoints = endpointRouteBuilder.ServiceProvider.GetServices<IEndpoint>();
 
         foreach (var endpoint in endpoints)
         {
-            endpoint.MapEndpoint(app);
+            endpoint.MapEndpoint(endpointRouteBuilder);
         }
 
-        return app;
+        return endpointRouteBuilder;
     }
 }
