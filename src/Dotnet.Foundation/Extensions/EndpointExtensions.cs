@@ -1,4 +1,4 @@
-﻿using Dotnet.Foundation.Abstractions.Endpoints;
+using Dotnet.Foundation.Abstractions.Endpoints;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Scrutor;
@@ -8,39 +8,45 @@ namespace Dotnet.Foundation.Extensions;
 
 public static class EndpointExtensions
 {
-    /// <summary>
-    /// Registers the endpoints implementing <see cref = "IEndpoint" /> to the service collection.
-    /// </summary>
-    /// <returns>The service collection.</returns>
-    public static IServiceCollection AddEndpoints(this IServiceCollection serviceCollection, Assembly assembly)
+    extension(IServiceCollection serviceCollection)
     {
-        ArgumentNullException.ThrowIfNull(serviceCollection);
-        ArgumentNullException.ThrowIfNull(assembly);
+        /// <summary>
+        /// Registers the endpoints implementing <see cref = "IEndpoint" /> to the service collection.
+        /// </summary>
+        /// <returns>The service collection.</returns>
+        public IServiceCollection AddEndpoints(Assembly assembly)
+        {
+            ArgumentNullException.ThrowIfNull(serviceCollection);
+            ArgumentNullException.ThrowIfNull(assembly);
 
-        serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
-                                           .AddClasses(filter => filter.AssignableTo<IEndpoint>(), true)
-                                           .UsingRegistrationStrategy(RegistrationStrategy.Append)
-                                           .As<IEndpoint>()
-                                           .WithSingletonLifetime());
+            serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
+                                               .AddClasses(filter => filter.AssignableTo<IEndpoint>(), true)
+                                               .UsingRegistrationStrategy(RegistrationStrategy.Append)
+                                               .As<IEndpoint>()
+                                               .WithSingletonLifetime());
 
-        return serviceCollection;
+            return serviceCollection;
+        }
     }
 
-    /// <summary>
-    /// Maps the endpoints implementing <see cref = "IEndpoint" /> to the endpoint route builder.
-    /// </summary>
-    /// <returns>The endpoint route builder.</returns>
-    public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder endpointRouteBuilder)
+    extension(IEndpointRouteBuilder endpointRouteBuilder)
     {
-        ArgumentNullException.ThrowIfNull(endpointRouteBuilder);
-
-        var endpoints = endpointRouteBuilder.ServiceProvider.GetServices<IEndpoint>();
-
-        foreach (var endpoint in endpoints)
+        /// <summary>
+        /// Maps the endpoints implementing <see cref = "IEndpoint" /> to the endpoint route builder.
+        /// </summary>
+        /// <returns>The endpoint route builder.</returns>
+        public IEndpointRouteBuilder MapEndpoints()
         {
-            endpoint.MapEndpoint(endpointRouteBuilder);
-        }
+            ArgumentNullException.ThrowIfNull(endpointRouteBuilder);
 
-        return endpointRouteBuilder;
+            var endpoints = endpointRouteBuilder.ServiceProvider.GetServices<IEndpoint>();
+
+            foreach (var endpoint in endpoints)
+            {
+                endpoint.MapEndpoint(endpointRouteBuilder);
+            }
+
+            return endpointRouteBuilder;
+        }
     }
 }

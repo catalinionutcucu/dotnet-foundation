@@ -1,4 +1,4 @@
-﻿using Dotnet.Foundation.Abstractions.LifetimeServices;
+using Dotnet.Foundation.Abstractions.LifetimeServices;
 using Microsoft.Extensions.DependencyInjection;
 using Scrutor;
 using System.Reflection;
@@ -9,25 +9,28 @@ public static class LifetimeServiceExtensions
 {
     private static readonly List<Type> LifetimeMarkers = [ typeof(IScopedService), typeof(ISingletonService), typeof(ITransientService) ];
 
-    /// <summary>
-    /// Registers as scoped service the implementation of <see cref = "IScopedService" /> with the matching interface (e.g. <c>SomeService</c> with <c>ISomeService</c>) to the service collection. <br />
-    /// Registers as singleton service the implementation of <see cref = "ISingletonService" /> with the matching interface (e.g. <c>SomeService</c> with <c>ISomeService</c>) to the service collection. <br />
-    /// Registers as transient service the implementation of <see cref = "ITransientService" /> with the matching interface (e.g. <c>SomeService</c> with <c>ISomeService</c>) to the service collection.
-    /// </summary>
-    /// <returns>The service collection.</returns>
-    public static IServiceCollection AddLifetimeServices(this IServiceCollection serviceCollection, Assembly assembly)
+    extension(IServiceCollection serviceCollection)
     {
-        ArgumentNullException.ThrowIfNull(serviceCollection);
-        ArgumentNullException.ThrowIfNull(assembly);
+        /// <summary>
+        /// Registers as scoped service the implementation of <see cref = "IScopedService" /> with the matching interface (e.g. <c>SomeService</c> with <c>ISomeService</c>) to the service collection. <br />
+        /// Registers as singleton service the implementation of <see cref = "ISingletonService" /> with the matching interface (e.g. <c>SomeService</c> with <c>ISomeService</c>) to the service collection. <br />
+        /// Registers as transient service the implementation of <see cref = "ITransientService" /> with the matching interface (e.g. <c>SomeService</c> with <c>ISomeService</c>) to the service collection.
+        /// </summary>
+        /// <returns>The service collection.</returns>
+        public IServiceCollection AddLifetimeServices(Assembly assembly)
+        {
+            ArgumentNullException.ThrowIfNull(serviceCollection);
+            ArgumentNullException.ThrowIfNull(assembly);
 
-        GuardAgainstServicesWithMultipleLifetimeMarkers(assembly);
-        GuardAgainstServicesWithNoMatchingInterface(assembly);
+            GuardAgainstServicesWithMultipleLifetimeMarkers(assembly);
+            GuardAgainstServicesWithNoMatchingInterface(assembly);
 
-        RegisterScopedServices(serviceCollection, assembly);
-        RegisterSingletonServices(serviceCollection, assembly);
-        RegisterTransientServices(serviceCollection, assembly);
+            RegisterScopedServices(serviceCollection, assembly);
+            RegisterSingletonServices(serviceCollection, assembly);
+            RegisterTransientServices(serviceCollection, assembly);
 
-        return serviceCollection;
+            return serviceCollection;
+        }
     }
 
     private static void RegisterScopedServices(IServiceCollection serviceCollection, Assembly assembly)

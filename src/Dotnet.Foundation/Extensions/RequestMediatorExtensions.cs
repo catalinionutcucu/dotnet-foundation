@@ -7,17 +7,20 @@ namespace Dotnet.Foundation.Extensions;
 
 public static class RequestMediatorExtensions
 {
-    /// <summary>
-    /// Registers the request mediator implementing <see cref = "IRequestMediator" /> to the service collection.
-    /// </summary>
-    /// <returns>The service collection.</returns>
-    public static IServiceCollection AddRequestMediator(this IServiceCollection serviceCollection, Assembly assembly)
+    extension(IServiceCollection serviceCollection)
     {
-        ArgumentNullException.ThrowIfNull(serviceCollection);
-        ArgumentNullException.ThrowIfNull(assembly);
+        /// <summary>
+        /// Registers the request mediator implementing <see cref = "IRequestMediator" /> to the service collection.
+        /// </summary>
+        /// <returns>The service collection.</returns>
+        public IServiceCollection AddRequestMediator(Assembly assembly)
+        {
+            ArgumentNullException.ThrowIfNull(serviceCollection);
+            ArgumentNullException.ThrowIfNull(assembly);
 
-        serviceCollection.AddScoped<IRequestMediator, RequestMediator>();
+            serviceCollection.AddScoped<IRequestMediator, RequestMediator>();
 
-        return serviceCollection;
+            return serviceCollection;
+        }
     }
 }

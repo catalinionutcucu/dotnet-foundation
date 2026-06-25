@@ -1,4 +1,4 @@
-﻿using Dotnet.Foundation.Abstractions.Requests;
+using Dotnet.Foundation.Abstractions.Requests;
 using Microsoft.Extensions.DependencyInjection;
 using Scrutor;
 using System.Reflection;
@@ -7,34 +7,37 @@ namespace Dotnet.Foundation.Extensions;
 
 public static class RequestHandlerExtensions
 {
-    /// <summary>
-    /// Registers the request handlers implementing <see cref = "IRequestHandler{TRequest,TResult}" /> or <see cref = "IRequestHandler{TRequest}" /> to the service collection.
-    /// </summary>
-    /// <returns>The service collection.</returns>
-    public static IServiceCollection AddRequestHandlers(this IServiceCollection serviceCollection, Assembly assembly)
+    extension(IServiceCollection serviceCollection)
     {
-        ArgumentNullException.ThrowIfNull(serviceCollection);
-        ArgumentNullException.ThrowIfNull(assembly);
+        /// <summary>
+        /// Registers the request handlers implementing <see cref = "IRequestHandler{TRequest,TResult}" /> or <see cref = "IRequestHandler{TRequest}" /> to the service collection.
+        /// </summary>
+        /// <returns>The service collection.</returns>
+        public IServiceCollection AddRequestHandlers(Assembly assembly)
+        {
+            ArgumentNullException.ThrowIfNull(serviceCollection);
+            ArgumentNullException.ThrowIfNull(assembly);
 
-        EnsureRequestsHaveMatchingRequestHandlers(assembly);
+            EnsureRequestsHaveMatchingRequestHandlers(assembly);
 
-        serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
-                                           .AddClasses(filter => filter.AssignableTo(typeof(IRequestHandler<,>)))
-                                           .UsingRegistrationStrategy(RegistrationStrategy.Throw)
-                                           .As(type => type.GetInterfaces()
-                                                           .Where(implementedInterface => AreTypesMatching(implementedInterface, typeof(IRequestHandler<,>), true))
-                                                           .ToList())
-                                           .WithScopedLifetime());
+            serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
+                                               .AddClasses(filter => filter.AssignableTo(typeof(IRequestHandler<,>)))
+                                               .UsingRegistrationStrategy(RegistrationStrategy.Throw)
+                                               .As(type => type.GetInterfaces()
+                                                               .Where(implementedInterface => AreTypesMatching(implementedInterface, typeof(IRequestHandler<,>), true))
+                                                               .ToList())
+                                               .WithScopedLifetime());
 
-        serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
-                                           .AddClasses(filter => filter.AssignableTo(typeof(IRequestHandler<>)))
-                                           .UsingRegistrationStrategy(RegistrationStrategy.Throw)
-                                           .As(type => type.GetInterfaces()
-                                                           .Where(implementedInterface => AreTypesMatching(implementedInterface, typeof(IRequestHandler<>), true))
-                                                           .ToList())
-                                           .WithScopedLifetime());
+            serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
+                                               .AddClasses(filter => filter.AssignableTo(typeof(IRequestHandler<>)))
+                                               .UsingRegistrationStrategy(RegistrationStrategy.Throw)
+                                               .As(type => type.GetInterfaces()
+                                                               .Where(implementedInterface => AreTypesMatching(implementedInterface, typeof(IRequestHandler<>), true))
+                                                               .ToList())
+                                               .WithScopedLifetime());
 
-        return serviceCollection;
+            return serviceCollection;
+        }
     }
 
     private static void EnsureRequestsHaveMatchingRequestHandlers(Assembly assembly)
