@@ -29,7 +29,7 @@ public static class MongoDriverExtensions
         /// <summary>
         /// Returns asynchronously a page of items of type <typeparamref name = "TItem" /> from a Mongo Driver query.
         /// </summary>
-        /// <returns>A task that produces a page of items of type <typeparamref name = "TItem" />.</returns>
+        /// <returns>A page of items of type <typeparamref name = "TItem" />.</returns>
         public async Task<Page<TItem>> ToPageAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(query);
