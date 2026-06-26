@@ -12,7 +12,7 @@ public sealed class RequestError
 
     private RequestError(RequestErrorType type, string code, params IEnumerable<string> issues)
     {
-        ArgumentNullException.ThrowIfNull(code);
+        ArgumentException.ThrowIfNullOrWhiteSpace(code);
         ArgumentNullException.ThrowIfNull(issues);
 
         Type = type;
