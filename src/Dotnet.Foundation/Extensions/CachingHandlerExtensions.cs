@@ -5,12 +5,12 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Dotnet.Foundation.Extensions;
 
-public static class CacheExtensions
+public static class CachingHandlerExtensions
 {
     extension(IServiceCollection serviceCollection)
     {
         /// <summary>
-        /// Registers the cache implementing <see cref = "ICache" /> to the service collection.
+        /// Registers the cache implementing <see cref = "ICachingHandler" /> to the service collection.
         /// </summary>
         /// <returns>The service collection.</returns>
         public IServiceCollection AddCache()
@@ -19,7 +19,7 @@ public static class CacheExtensions
 
             serviceCollection.AddDistributedMemoryCache();
 
-            serviceCollection.TryAddSingleton<ICache, Cache>();
+            serviceCollection.TryAddSingleton<ICachingHandler, CachingHandler>();
 
             return serviceCollection;
         }

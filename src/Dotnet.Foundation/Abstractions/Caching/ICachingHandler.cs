@@ -1,6 +1,6 @@
 namespace Dotnet.Foundation.Abstractions.Caching;
 
-public interface ICache
+public interface ICachingHandler
 {
     /// <summary>
     /// Gets asynchronously the value under the specified key from the cache.

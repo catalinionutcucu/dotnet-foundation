@@ -4,11 +4,11 @@ using System.Text.Json;
 
 namespace Dotnet.Foundation.Implementations;
 
-public sealed class Cache : ICache
+public sealed class CachingHandler : ICachingHandler
 {
     private readonly IDistributedCache _distributedCache;
 
-    public Cache(IDistributedCache distributedCache)
+    public CachingHandler(IDistributedCache distributedCache)
     {
         _distributedCache = distributedCache;
     }
