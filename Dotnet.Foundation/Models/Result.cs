@@ -59,6 +59,15 @@ public sealed class Result<TValue, TError>
     {
         return Success(value);
     }
+
+    /// <summary>
+    /// Converts an error of type <typeparamref name = "TError" /> to a <see cref = "Result{TValue,TError}" /> instance representing a failure result.
+    /// </summary>
+    /// <returns>A <see cref = "Result{TValue,TError}" /> instance representing a failure result.</returns>
+    public static implicit operator Result<TValue, TError>(TError error)
+    {
+        return Failure(error);
+    }
 }
 
 /// <summary>
@@ -105,6 +114,15 @@ public sealed class Result<TError>
         ArgumentNullException.ThrowIfNull(error);
 
         return new(error);
+    }
+
+    /// <summary>
+    /// Converts an error of type <typeparamref name = "TError" /> to a <see cref = "Result{TError}" /> instance representing a failure result.
+    /// </summary>
+    /// <returns>A <see cref = "Result{TError}" /> instance representing a failure result.</returns>
+    public static implicit operator Result<TError>(TError error)
+    {
+        return Failure(error);
     }
 }
 
