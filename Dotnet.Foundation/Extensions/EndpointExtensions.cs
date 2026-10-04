@@ -20,7 +20,7 @@ public static class EndpointExtensions
             ArgumentNullException.ThrowIfNull(assembly);
 
             serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
-                                               .AddClasses(filter => filter.AssignableTo<IEndpoint>(), true)
+                                               .AddClasses(filter => filter.AssignableTo<IEndpoint>(), false)
                                                .UsingRegistrationStrategy(RegistrationStrategy.Append)
                                                .As<IEndpoint>()
                                                .WithSingletonLifetime());

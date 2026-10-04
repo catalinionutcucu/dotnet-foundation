@@ -5,11 +5,11 @@ public sealed class Result<TValue, TError>
     public ResultState State { get; }
 
     public TValue Value => State == ResultState.Success ?
-        field :
+        field! :
         throw new InvalidOperationException($"Property '{nameof(Value)}' cannot be accessed on failure result.");
 
     public TError Error => State == ResultState.Failure ?
-        field :
+        field! :
         throw new InvalidOperationException($"Property '{nameof(Error)}' cannot be accessed on success result.");
 
     public bool IsSuccess => State is ResultState.Success;
@@ -59,7 +59,7 @@ public sealed class Result<TError>
     public ResultState State { get; }
 
     public TError Error => State == ResultState.Failure ?
-        field :
+        field! :
         throw new InvalidOperationException($"Property '{nameof(Error)}' cannot be accessed on success result.");
 
     public bool IsSuccess => State is ResultState.Success;

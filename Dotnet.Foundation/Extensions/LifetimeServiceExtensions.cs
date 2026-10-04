@@ -36,7 +36,7 @@ public static class LifetimeServiceExtensions
     private static void RegisterScopedServices(IServiceCollection serviceCollection, Assembly assembly)
     {
         serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
-                                           .AddClasses(filter => filter.AssignableTo<IScopedService>(), true)
+                                           .AddClasses(filter => filter.AssignableTo<IScopedService>(), false)
                                            .UsingRegistrationStrategy(RegistrationStrategy.Skip)
                                            .AsMatchingInterface()
                                            .WithScopedLifetime());
@@ -45,7 +45,7 @@ public static class LifetimeServiceExtensions
     private static void RegisterSingletonServices(IServiceCollection serviceCollection, Assembly assembly)
     {
         serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
-                                           .AddClasses(filter => filter.AssignableTo<ISingletonService>(), true)
+                                           .AddClasses(filter => filter.AssignableTo<ISingletonService>(), false)
                                            .UsingRegistrationStrategy(RegistrationStrategy.Skip)
                                            .AsMatchingInterface()
                                            .WithSingletonLifetime());
@@ -54,7 +54,7 @@ public static class LifetimeServiceExtensions
     private static void RegisterTransientServices(IServiceCollection serviceCollection, Assembly assembly)
     {
         serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
-                                           .AddClasses(filter => filter.AssignableTo<ITransientService>(), true)
+                                           .AddClasses(filter => filter.AssignableTo<ITransientService>(), false)
                                            .UsingRegistrationStrategy(RegistrationStrategy.Skip)
                                            .AsMatchingInterface()
                                            .WithTransientLifetime());

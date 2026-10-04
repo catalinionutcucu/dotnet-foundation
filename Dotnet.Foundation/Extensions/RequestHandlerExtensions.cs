@@ -21,7 +21,7 @@ public static class RequestHandlerExtensions
             EnsureRequestsHaveMatchingRequestHandlers(assembly);
 
             serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
-                                               .AddClasses(filter => filter.AssignableTo(typeof(IRequestHandler<,>)))
+                                               .AddClasses(filter => filter.AssignableTo(typeof(IRequestHandler<,>)), false)
                                                .UsingRegistrationStrategy(RegistrationStrategy.Throw)
                                                .As(type => type.GetInterfaces()
                                                                .Where(implementedInterface => AreTypesMatching(implementedInterface, typeof(IRequestHandler<,>), true))
@@ -29,7 +29,7 @@ public static class RequestHandlerExtensions
                                                .WithScopedLifetime());
 
             serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
-                                               .AddClasses(filter => filter.AssignableTo(typeof(IRequestHandler<>)))
+                                               .AddClasses(filter => filter.AssignableTo(typeof(IRequestHandler<>)), false)
                                                .UsingRegistrationStrategy(RegistrationStrategy.Throw)
                                                .As(type => type.GetInterfaces()
                                                                .Where(implementedInterface => AreTypesMatching(implementedInterface, typeof(IRequestHandler<>), true))
