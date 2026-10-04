@@ -21,10 +21,6 @@ public sealed class RequestMediator : IRequestMediator
         _serviceProvider = serviceProvider;
     }
 
-    private delegate Task<TResult> RequestPipeline<TResult>(IServiceProvider serviceProvider, IRequest<TResult> request, CancellationToken cancellationToken);
-
-    private delegate Task RequestPipeline(IServiceProvider serviceProvider, IRequest request, CancellationToken cancellationToken);
-
     /// <inheritdoc />
     public async Task<TResult> SendAsync<TResult>(IRequest<TResult> request, CancellationToken cancellationToken = default)
     {
@@ -44,6 +40,10 @@ public sealed class RequestMediator : IRequestMediator
 
         await requestPipeline(_serviceProvider, request, cancellationToken).ConfigureAwait(false);
     }
+
+    private delegate Task<TResult> RequestPipeline<TResult>(IServiceProvider serviceProvider, IRequest<TResult> request, CancellationToken cancellationToken);
+
+    private delegate Task RequestPipeline(IServiceProvider serviceProvider, IRequest request, CancellationToken cancellationToken);
 
     private static RequestPipeline<TResult> CreateRequestPipeline<TResult>(Type requestType)
     {
