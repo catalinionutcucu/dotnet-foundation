@@ -30,6 +30,30 @@ public sealed class CachingHandler : ICachingHandler
     }
 
     /// <inheritdoc />
+    public async Task<TValue> GetOrSetAsync<TValue>(string key, Func<CancellationToken, Task<TValue>> factory, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        ArgumentNullException.ThrowIfNull(factory);
+
+        var valueBytes = await _distributedCache.GetAsync(key, cancellationToken)
+                                                .ConfigureAwait(false);
+
+        if (valueBytes is not null)
+        {
+            return JsonSerializer.Deserialize<TValue>(valueBytes)!;
+        }
+
+        var value = await factory(cancellationToken).ConfigureAwait(false);
+
+        if (value is not null)
+        {
+            await SetAsync(key, value, expiration, cancellationToken).ConfigureAwait(false);
+        }
+
+        return value;
+    }
+
+    /// <inheritdoc />
     public async Task SetAsync<TValue>(string key, TValue value, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);

@@ -12,9 +12,12 @@ public sealed class ExceptionHandler : IExceptionHandler
 {
     private readonly ILogger<ExceptionHandler> _logger;
 
-    public ExceptionHandler(ILogger<ExceptionHandler> logger)
+    private readonly IProblemDetailsService _problemDetailsService;
+
+    public ExceptionHandler(ILogger<ExceptionHandler> logger, IProblemDetailsService problemDetailsService)
     {
         _logger = logger;
+        _problemDetailsService = problemDetailsService;
     }
 
     /// <inheritdoc />
@@ -24,37 +27,24 @@ public sealed class ExceptionHandler : IExceptionHandler
         {
             _logger.LogWarning(exception, "A not implemented exception occurred while processing the request.");
 
-            httpContext.Response.StatusCode = 501;
-
-            await httpContext.Response
-                             .WriteAsJsonAsync(
-                                 new ProblemDetails
-                                 {
-                                     Status = 501,
-                                     Title = "Not Implemented",
-                                     Type = "https://tools.ietf.org/html/rfc7231#section-6.6.2"
-                                 },
-                                 cancellationToken)
-                             .ConfigureAwait(false);
+            httpContext.Response.StatusCode = StatusCodes.Status501NotImplemented;
         }
         else
         {
             _logger.LogError(exception, "An unhandled exception occurred while processing the request.");
 
-            httpContext.Response.StatusCode = 500;
-
-            await httpContext.Response
-                             .WriteAsJsonAsync(
-                                 new ProblemDetails
-                                 {
-                                     Status = 500,
-                                     Title = "Internal Server Error",
-                                     Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1"
-                                 },
-                                 cancellationToken)
-                             .ConfigureAwait(false);
+            httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
         }
 
-        return true;
+        return await _problemDetailsService.TryWriteAsync(new ProblemDetailsContext
+                                           {
+                                               HttpContext = httpContext,
+                                               ProblemDetails = new ProblemDetails
+                                               {
+                                                   Status = httpContext.Response.StatusCode
+                                               },
+                                               Exception = exception
+                                           })
+                                           .ConfigureAwait(false);
     }
 }

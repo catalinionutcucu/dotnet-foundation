@@ -20,12 +20,12 @@ public static class RequestErrorExtensions
         {
             ArgumentNullException.ThrowIfNull(requestError);
 
-            var (status, title, type) = requestError.Type switch
+            var status = requestError.Type switch
             {
-                RequestErrorType.RequestInvalid => (400, "Bad Request", "https://tools.ietf.org/html/rfc7231#section-6.5.1"),
-                RequestErrorType.RequestNotAllowed => (403, "Forbidden", "https://tools.ietf.org/html/rfc7231#section-6.5.3"),
-                RequestErrorType.ResourceNotFound => (404, "Not Found", "https://tools.ietf.org/html/rfc7231#section-6.5.4"),
-                RequestErrorType.ResourceConflict => (409, "Conflict", "https://tools.ietf.org/html/rfc7231#section-6.5.8"),
+                RequestErrorType.RequestInvalid => StatusCodes.Status400BadRequest,
+                RequestErrorType.RequestNotAllowed => StatusCodes.Status403Forbidden,
+                RequestErrorType.ResourceNotFound => StatusCodes.Status404NotFound,
+                RequestErrorType.ResourceConflict => StatusCodes.Status409Conflict,
                 _ => throw new UnreachableException()
             };
 
@@ -33,8 +33,6 @@ public static class RequestErrorExtensions
                 new ProblemDetails
                 {
                     Status = status,
-                    Title = title,
-                    Type = type,
                     Extensions = new Dictionary<string, object?>
                     {
                         {

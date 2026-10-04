@@ -1,5 +1,6 @@
 using Dotnet.Foundation.Abstractions.Requests;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace Dotnet.Foundation.Implementations.Requests;
@@ -9,6 +10,10 @@ namespace Dotnet.Foundation.Implementations.Requests;
 /// </summary>
 public sealed class RequestMediator : IRequestMediator
 {
+    private static readonly ConcurrentDictionary<Type, Delegate> RequestPipelines = new();
+
+    private static readonly ConcurrentDictionary<Type, RequestPipeline> RequestPipelinesWithoutResult = new();
+
     private readonly IServiceProvider _serviceProvider;
 
     public RequestMediator(IServiceProvider serviceProvider)
@@ -16,36 +21,18 @@ public sealed class RequestMediator : IRequestMediator
         _serviceProvider = serviceProvider;
     }
 
+    private delegate Task<TResult> RequestPipeline<TResult>(IServiceProvider serviceProvider, IRequest<TResult> request, CancellationToken cancellationToken);
+
+    private delegate Task RequestPipeline(IServiceProvider serviceProvider, IRequest request, CancellationToken cancellationToken);
+
     /// <inheritdoc />
     public async Task<TResult> SendAsync<TResult>(IRequest<TResult> request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var requestType = request.GetType();
+        var requestPipeline = (RequestPipeline<TResult>)RequestPipelines.GetOrAdd(request.GetType(), requestType => CreateRequestPipeline<TResult>(requestType));
 
-        var requestHandlerType = typeof(IRequestHandler<,>).MakeGenericType(requestType, typeof(TResult));
-
-        var requestHandler = _serviceProvider.GetService(requestHandlerType);
-
-        if (requestHandler is null)
-        {
-            throw new InvalidOperationException($"No request handler found for request type '{requestType.FullName}'.");
-        }
-
-        var requestBehaviorType = typeof(IRequestBehavior<,>).MakeGenericType(requestType, typeof(TResult));
-
-        var requestBehaviors = _serviceProvider.GetServices(requestBehaviorType);
-
-        var handleAsync = () => (Task<TResult>)InvokeHandleAsync(requestHandlerType, requestHandler, [ request, cancellationToken ]);
-
-        foreach (var requestBehavior in requestBehaviors.Reverse())
-        {
-            var nextHandleAsync = handleAsync;
-
-            handleAsync = () => (Task<TResult>)InvokeHandleAsync(requestBehaviorType, requestBehavior!, [ request, nextHandleAsync, cancellationToken ]);
-        }
-
-        return await handleAsync().ConfigureAwait(false);
+        return await requestPipeline(_serviceProvider, request, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -53,37 +40,70 @@ public sealed class RequestMediator : IRequestMediator
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var requestType = request.GetType();
+        var requestPipeline = RequestPipelinesWithoutResult.GetOrAdd(request.GetType(), requestType => CreateRequestPipeline(requestType));
 
-        var requestHandlerType = typeof(IRequestHandler<>).MakeGenericType(requestType);
+        await requestPipeline(_serviceProvider, request, cancellationToken).ConfigureAwait(false);
+    }
 
-        var requestHandler = _serviceProvider.GetService(requestHandlerType);
+    private static RequestPipeline<TResult> CreateRequestPipeline<TResult>(Type requestType)
+    {
+        return typeof(RequestMediator).GetMethod(nameof(RunRequestPipelineAsync), BindingFlags.NonPublic | BindingFlags.Static)!
+                                      .MakeGenericMethod(requestType, typeof(TResult))
+                                      .CreateDelegate<RequestPipeline<TResult>>();
+    }
+
+    private static RequestPipeline CreateRequestPipeline(Type requestType)
+    {
+        return typeof(RequestMediator).GetMethod(nameof(RunRequestPipelineWithoutResultAsync), BindingFlags.NonPublic | BindingFlags.Static)!
+                                      .MakeGenericMethod(requestType)
+                                      .CreateDelegate<RequestPipeline>();
+    }
+
+    private static Task<TResult> RunRequestPipelineAsync<TRequest, TResult>(IServiceProvider serviceProvider, IRequest<TResult> request, CancellationToken cancellationToken)
+        where TRequest : IRequest<TResult>
+    {
+        var requestHandler = serviceProvider.GetService<IRequestHandler<TRequest, TResult>>();
 
         if (requestHandler is null)
         {
-            throw new InvalidOperationException($"No request handler found for request type '{requestType.FullName}'.");
+            throw new InvalidOperationException($"No request handler found for request type '{typeof(TRequest).FullName}'.");
         }
 
-        var requestBehaviorType = typeof(IRequestBehavior<>).MakeGenericType(requestType);
+        var requestBehaviors = serviceProvider.GetServices<IRequestBehavior<TRequest, TResult>>();
 
-        var requestBehaviors = _serviceProvider.GetServices(requestBehaviorType);
-
-        var handleAsync = () => (Task)InvokeHandleAsync(requestHandlerType, requestHandler, [ request, cancellationToken ]);
+        var handleAsync = () => requestHandler.HandleAsync((TRequest)request, cancellationToken);
 
         foreach (var requestBehavior in requestBehaviors.Reverse())
         {
             var nextHandleAsync = handleAsync;
 
-            handleAsync = () => (Task)InvokeHandleAsync(requestBehaviorType, requestBehavior!, [ request, nextHandleAsync, cancellationToken ]);
+            handleAsync = () => requestBehavior.HandleAsync((TRequest)request, nextHandleAsync, cancellationToken);
         }
 
-        await handleAsync().ConfigureAwait(false);
+        return handleAsync();
     }
 
-    private static object InvokeHandleAsync(Type serviceType, object service, object?[] arguments)
+    private static Task RunRequestPipelineWithoutResultAsync<TRequest>(IServiceProvider serviceProvider, IRequest request, CancellationToken cancellationToken)
+        where TRequest : IRequest
     {
-        var handleAsyncMethod = serviceType.GetMethod(nameof(IRequestHandler<>.HandleAsync))!;
+        var requestHandler = serviceProvider.GetService<IRequestHandler<TRequest>>();
 
-        return handleAsyncMethod.Invoke(service, BindingFlags.DoNotWrapExceptions, null, arguments, null)!;
+        if (requestHandler is null)
+        {
+            throw new InvalidOperationException($"No request handler found for request type '{typeof(TRequest).FullName}'.");
+        }
+
+        var requestBehaviors = serviceProvider.GetServices<IRequestBehavior<TRequest>>();
+
+        var handleAsync = () => requestHandler.HandleAsync((TRequest)request, cancellationToken);
+
+        foreach (var requestBehavior in requestBehaviors.Reverse())
+        {
+            var nextHandleAsync = handleAsync;
+
+            handleAsync = () => requestBehavior.HandleAsync((TRequest)request, nextHandleAsync, cancellationToken);
+        }
+
+        return handleAsync();
     }
 }
