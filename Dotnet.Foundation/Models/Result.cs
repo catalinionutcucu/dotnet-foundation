@@ -1,9 +1,14 @@
+using Dotnet.Foundation.Abstraction
+
+
+
 namespace Dotnet.Foundation.Models;
 
 /// <summary>
 /// Represents the result of an operation with a value of type <typeparamref name = "TValue" /> on success or an error of type <typeparamref name = "TError" /> on failure.
 /// </summary>
-public sealed class Result<TValue, TError>
+pub
+ ic sealed class Result<TValue, TError> : IFailureResult<Result<TValue, TError>, TError>
 {
     public ResultState State { get; }
 
@@ -73,7 +78,7 @@ public sealed class Result<TValue, TError>
 /// <summary>
 /// Represents the result of an operation without a value on success or with an error of type <typeparamref name = "TError" /> on failure.
 /// </summary>
-public sealed class Result<TError>
+public sealed class Result<TError> : IFailureResult<Result<TError>, TError>
 {
     public ResultState State { get; }
 
