@@ -5,6 +5,9 @@ using System.Diagnostics;
 
 namespace Dotnet.Foundation.Extensions;
 
+/// <summary>
+/// Provides extension members for mapping <see cref = "RequestError" /> instances to HTTP responses.
+/// </summary>
 public static class RequestErrorExtensions
 {
     extension(RequestError requestError)

@@ -1,3 +1,6 @@
-﻿namespace Dotnet.Foundation.Abstractions.LifetimeServices;
+namespace Dotnet.Foundation.Abstractions.LifetimeServices;
 
+/// <summary>
+/// Marks a service to be registered as scoped service with the matching interface (e.g. <c>SomeService</c> with <c>ISomeService</c>).
+/// </summary>
 public interface IScopedService;

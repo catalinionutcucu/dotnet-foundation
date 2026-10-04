@@ -1,7 +1,10 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 
 namespace Dotnet.Foundation.Models;
 
+/// <summary>
+/// Represents a page of items of type <typeparamref name = "TItem" /> with its pagination details.
+/// </summary>
 public sealed class Page<TItem>
 {
     public ImmutableArray<TItem> Items { get; }

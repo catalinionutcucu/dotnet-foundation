@@ -1,16 +1,19 @@
-﻿namespace Dotnet.Foundation.Models;
+namespace Dotnet.Foundation.Models;
 
+/// <summary>
+/// Represents the result of an operation with a value of type <typeparamref name = "TValue" /> on success or an error of type <typeparamref name = "TError" /> on failure.
+/// </summary>
 public sealed class Result<TValue, TError>
 {
     public ResultState State { get; }
 
-    public TValue Value => State == ResultState.Success ?
+    public TValue Value => State is ResultState.Success ?
         field! :
-        throw new InvalidOperationException($"Property '{nameof(Value)}' cannot be accessed on failure result.");
+        throw new InvalidOperationException($"Property '{nameof(Value)}' cannot be accessed on a failure result.");
 
-    public TError Error => State == ResultState.Failure ?
+    public TError Error => State is ResultState.Failure ?
         field! :
-        throw new InvalidOperationException($"Property '{nameof(Error)}' cannot be accessed on success result.");
+        throw new InvalidOperationException($"Property '{nameof(Error)}' cannot be accessed on a success result.");
 
     public bool IsSuccess => State is ResultState.Success;
 
@@ -48,19 +51,26 @@ public sealed class Result<TValue, TError>
         return new(error);
     }
 
+    /// <summary>
+    /// Converts a value of type <typeparamref name = "TValue" /> to a <see cref = "Result{TValue,TError}" /> instance representing a success result.
+    /// </summary>
+    /// <returns>A <see cref = "Result{TValue,TError}" /> instance representing a success result.</returns>
     public static implicit operator Result<TValue, TError>(TValue value)
     {
         return Success(value);
     }
 }
 
+/// <summary>
+/// Represents the result of an operation without a value on success or with an error of type <typeparamref name = "TError" /> on failure.
+/// </summary>
 public sealed class Result<TError>
 {
     public ResultState State { get; }
 
-    public TError Error => State == ResultState.Failure ?
+    public TError Error => State is ResultState.Failure ?
         field! :
-        throw new InvalidOperationException($"Property '{nameof(Error)}' cannot be accessed on success result.");
+        throw new InvalidOperationException($"Property '{nameof(Error)}' cannot be accessed on a success result.");
 
     public bool IsSuccess => State is ResultState.Success;
 
@@ -98,6 +108,9 @@ public sealed class Result<TError>
     }
 }
 
+/// <summary>
+/// Specifies the state of a <see cref = "Result{TValue,TError}" /> or <see cref = "Result{TError}" /> instance.
+/// </summary>
 public enum ResultState
 {
     Success,

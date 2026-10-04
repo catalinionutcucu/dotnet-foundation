@@ -2,6 +2,9 @@ using Dotnet.Foundation.Models;
 
 namespace Dotnet.Foundation.Extensions;
 
+/// <summary>
+/// Provides extension members for matching <see cref = "Result{TValue,TError}" /> and <see cref = "Result{TError}" /> instances.
+/// </summary>
 public static class ResultExtensions
 {
     extension<TValue, TError>(Result<TValue, TError> result)

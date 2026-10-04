@@ -1,9 +1,12 @@
-using Dotnet.Foundation.Abstractions.Caching;
+using Dotnet.Foundation.Abstractions;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
 
 namespace Dotnet.Foundation.Implementations;
 
+/// <summary>
+/// Represents the cache implementing <see cref = "ICachingHandler" />, storing values serialized as JSON in an <see cref = "IDistributedCache" />.
+/// </summary>
 public sealed class CachingHandler : ICachingHandler
 {
     private readonly IDistributedCache _distributedCache;

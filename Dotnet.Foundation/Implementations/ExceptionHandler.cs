@@ -5,6 +5,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Dotnet.Foundation.Implementations;
 
+/// <summary>
+/// Represents the exception handler implementing <see cref = "IExceptionHandler" />, mapping unhandled exceptions to HTTP responses.
+/// </summary>
 public sealed class ExceptionHandler : IExceptionHandler
 {
     private readonly ILogger<ExceptionHandler> _logger;
@@ -31,8 +34,7 @@ public sealed class ExceptionHandler : IExceptionHandler
                                      Title = "Not Implemented",
                                      Type = "https://tools.ietf.org/html/rfc7231#section-6.6.2"
                                  },
-                                 cancellationToken
-                             )
+                                 cancellationToken)
                              .ConfigureAwait(false);
         }
         else
@@ -49,8 +51,7 @@ public sealed class ExceptionHandler : IExceptionHandler
                                      Title = "Internal Server Error",
                                      Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1"
                                  },
-                                 cancellationToken
-                             )
+                                 cancellationToken)
                              .ConfigureAwait(false);
         }
 

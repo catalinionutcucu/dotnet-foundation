@@ -1,15 +1,20 @@
-﻿namespace Dotnet.Foundation.Abstractions.Requests;
+namespace Dotnet.Foundation.Abstractions.Requests;
 
+/// <summary>
+/// Defines a mediator for sending requests to their corresponding handlers.
+/// </summary>
 public interface IRequestMediator
 {
     /// <summary>
-    /// Sends a request of type <see cref = "IRequest{TResult}" /> to the corresponding handler of type <see cref = "IRequestHandler{TRequest,TResult}" />.
+    /// Asynchronously sends a request of type <see cref = "IRequest{TResult}" /> to the corresponding handler of type <see cref = "IRequestHandler{TRequest,TResult}" />.
     /// </summary>
     /// <returns>A value of type <typeparamref name = "TResult" /> representing the result of the request.</returns>
+    /// <exception cref = "InvalidOperationException">No request handler is registered for the request type.</exception>
     public Task<TResult> SendAsync<TResult>(IRequest<TResult> request, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Sends a request of type <see cref = "IRequest" /> to the corresponding handler of type <see cref = "IRequestHandler{TRequest}" />.
+    /// Asynchronously sends a request of type <see cref = "IRequest" /> to the corresponding handler of type <see cref = "IRequestHandler{TRequest}" />.
     /// </summary>
+    /// <exception cref = "InvalidOperationException">No request handler is registered for the request type.</exception>
     public Task SendAsync(IRequest request, CancellationToken cancellationToken = default);
 }

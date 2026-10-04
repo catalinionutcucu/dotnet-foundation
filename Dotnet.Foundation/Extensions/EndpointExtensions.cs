@@ -1,4 +1,4 @@
-using Dotnet.Foundation.Abstractions.Endpoints;
+using Dotnet.Foundation.Abstractions;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Scrutor;
@@ -6,6 +6,9 @@ using System.Reflection;
 
 namespace Dotnet.Foundation.Extensions;
 
+/// <summary>
+/// Provides extension members for registering and mapping the endpoints implementing <see cref = "IEndpoint" />.
+/// </summary>
 public static class EndpointExtensions
 {
     extension(IServiceCollection serviceCollection)

@@ -5,6 +5,9 @@ using System.Reflection;
 
 namespace Dotnet.Foundation.Extensions;
 
+/// <summary>
+/// Provides extension members for registering the services marked with <see cref = "IScopedService" />, <see cref = "ISingletonService" /> or <see cref = "ITransientService" />.
+/// </summary>
 public static class LifetimeServiceExtensions
 {
     private static readonly List<Type> LifetimeMarkers = [ typeof(IScopedService), typeof(ISingletonService), typeof(ITransientService) ];
@@ -12,11 +15,15 @@ public static class LifetimeServiceExtensions
     extension(IServiceCollection serviceCollection)
     {
         /// <summary>
-        /// Registers as scoped service the implementation of <see cref = "IScopedService" /> with the matching interface (e.g. <c>SomeService</c> with <c>ISomeService</c>) to the service collection. <br />
-        /// Registers as singleton service the implementation of <see cref = "ISingletonService" /> with the matching interface (e.g. <c>SomeService</c> with <c>ISomeService</c>) to the service collection. <br />
-        /// Registers as transient service the implementation of <see cref = "ITransientService" /> with the matching interface (e.g. <c>SomeService</c> with <c>ISomeService</c>) to the service collection.
+        /// Registers the services marked with a lifetime marker with the matching interface (e.g. <c>SomeService</c> with <c>ISomeService</c>) to the service collection:
+        /// <list type = "bullet">
+        /// <item><description>The implementations of <see cref = "IScopedService" /> as scoped services.</description></item>
+        /// <item><description>The implementations of <see cref = "ISingletonService" /> as singleton services.</description></item>
+        /// <item><description>The implementations of <see cref = "ITransientService" /> as transient services.</description></item>
+        /// </list>
         /// </summary>
         /// <returns>The service collection.</returns>
+        /// <exception cref = "InvalidOperationException">A service is marked with multiple lifetime markers or has no matching interface.</exception>
         public IServiceCollection AddLifetimeServices(Assembly assembly)
         {
             ArgumentNullException.ThrowIfNull(serviceCollection);
@@ -37,7 +44,7 @@ public static class LifetimeServiceExtensions
     {
         serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
                                            .AddClasses(filter => filter.AssignableTo<IScopedService>(), false)
-                                           .UsingRegistrationStrategy(RegistrationStrategy.Skip)
+                                           .UsingRegistrationStrategy(RegistrationStrategy.Append)
                                            .AsMatchingInterface()
                                            .WithScopedLifetime());
     }
@@ -46,7 +53,7 @@ public static class LifetimeServiceExtensions
     {
         serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
                                            .AddClasses(filter => filter.AssignableTo<ISingletonService>(), false)
-                                           .UsingRegistrationStrategy(RegistrationStrategy.Skip)
+                                           .UsingRegistrationStrategy(RegistrationStrategy.Append)
                                            .AsMatchingInterface()
                                            .WithSingletonLifetime());
     }
@@ -55,7 +62,7 @@ public static class LifetimeServiceExtensions
     {
         serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
                                            .AddClasses(filter => filter.AssignableTo<ITransientService>(), false)
-                                           .UsingRegistrationStrategy(RegistrationStrategy.Skip)
+                                           .UsingRegistrationStrategy(RegistrationStrategy.Append)
                                            .AsMatchingInterface()
                                            .WithTransientLifetime());
     }
@@ -71,8 +78,8 @@ public static class LifetimeServiceExtensions
         if (servicesWithMultipleLifetimeMarkers.Any())
         {
             throw new InvalidOperationException(servicesWithMultipleLifetimeMarkers.Count == 1 ?
-                $"Multiple lifetime marker implementations found for service '{servicesWithMultipleLifetimeMarkers.First().FullName}'." :
-                $"Multiple lifetime marker implementations found for services {string.Join(", ", servicesWithMultipleLifetimeMarkers.Select(service => $"'{service.FullName}'"))}.");
+                $"Multiple lifetime markers found for service type '{servicesWithMultipleLifetimeMarkers.First().FullName}'." :
+                $"Multiple lifetime markers found for service types {string.Join(", ", servicesWithMultipleLifetimeMarkers.Select(service => $"'{service.FullName}'"))}.");
         }
     }
 
@@ -80,16 +87,16 @@ public static class LifetimeServiceExtensions
     {
         var assemblyTypes = assembly.GetTypes();
 
-        var servicesWithoutMatchingInterface = assemblyTypes.Where(type => type is { IsClass: true, IsAbstract: false })
-                                                            .Where(type => LifetimeMarkers.Any(marker => marker.IsAssignableFrom(type)))
-                                                            .Where(type => !type.GetInterfaces().Any(i => i.Name == $"I{type.Name}"))
-                                                            .ToList();
+        var servicesWithNoMatchingInterface = assemblyTypes.Where(type => type is { IsClass: true, IsAbstract: false })
+                                                           .Where(type => LifetimeMarkers.Any(lifetimeMarker => lifetimeMarker.IsAssignableFrom(type)))
+                                                           .Where(type => !type.GetInterfaces().Any(implementedInterface => implementedInterface.Name == $"I{type.Name}"))
+                                                           .ToList();
 
-        if (servicesWithoutMatchingInterface.Any())
+        if (servicesWithNoMatchingInterface.Any())
         {
-            throw new InvalidOperationException(servicesWithoutMatchingInterface.Count == 1 ?
-                $"No matching interface found for service '{servicesWithoutMatchingInterface.First().FullName}'." :
-                $"No matching interface found for services {string.Join(", ", servicesWithoutMatchingInterface.Select(service => $"'{service.FullName}'"))}.");
+            throw new InvalidOperationException(servicesWithNoMatchingInterface.Count == 1 ?
+                $"No matching interface found for service type '{servicesWithNoMatchingInterface.First().FullName}'." :
+                $"No matching interface found for service types {string.Join(", ", servicesWithNoMatchingInterface.Select(service => $"'{service.FullName}'"))}.");
         }
     }
 }

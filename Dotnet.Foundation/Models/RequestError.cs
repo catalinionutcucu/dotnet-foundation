@@ -1,7 +1,10 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 
 namespace Dotnet.Foundation.Models;
 
+/// <summary>
+/// Represents an error that occurred while processing a request.
+/// </summary>
 public sealed class RequestError
 {
     public RequestErrorType Type { get; }
@@ -57,6 +60,9 @@ public sealed class RequestError
     }
 }
 
+/// <summary>
+/// Specifies the type of a <see cref = "RequestError" /> instance.
+/// </summary>
 public enum RequestErrorType
 {
     RequestInvalid,

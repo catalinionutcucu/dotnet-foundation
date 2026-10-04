@@ -1,14 +1,17 @@
 using Dotnet.Foundation.Models;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 
-namespace Dotnet.Foundation.Extensions;
+namespace Dotnet.Foundation.Extensions.Pagination;
 
-public static class EntityFrameworkExtensions
+/// <summary>
+/// Provides extension members for paginating Mongo Driver queries.
+/// </summary>
+public static class MongoDriverExtensions
 {
-    extension<TItem>(IQueryable<TItem> query)
+    extension<TItem>(IFindFluent<TItem, TItem> query)
     {
         /// <summary>
-        /// Returns a page of items of type <typeparamref name = "TItem" /> from an Entity Framework query.
+        /// Returns a page of items of type <typeparamref name = "TItem" /> from a Mongo Driver query.
         /// </summary>
         /// <returns>A page of items of type <typeparamref name = "TItem" />.</returns>
         public Page<TItem> ToPage(int pageNumber, int pageSize)
@@ -17,17 +20,17 @@ public static class EntityFrameworkExtensions
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageNumber, 0);
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
 
-            var totalItems = query.Count();
+            var totalItems = query.CountDocuments();
 
             var items = query.Skip((pageNumber - 1) * pageSize)
-                             .Take(pageSize)
+                             .Limit(pageSize)
                              .ToList();
 
-            return new Page<TItem>(items, pageNumber, pageSize, totalItems);
+            return new(items, pageNumber, pageSize, totalItems);
         }
 
         /// <summary>
-        /// Returns asynchronously a page of items of type <typeparamref name = "TItem" /> from an Entity Framework query.
+        /// Asynchronously returns a page of items of type <typeparamref name = "TItem" /> from a Mongo Driver query.
         /// </summary>
         /// <returns>A page of items of type <typeparamref name = "TItem" />.</returns>
         public async Task<Page<TItem>> ToPageAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
@@ -36,15 +39,15 @@ public static class EntityFrameworkExtensions
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageNumber, 0);
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
 
-            var totalItems = await query.CountAsync(cancellationToken)
+            var totalItems = await query.CountDocumentsAsync(cancellationToken)
                                         .ConfigureAwait(false);
 
             var items = await query.Skip((pageNumber - 1) * pageSize)
-                                   .Take(pageSize)
+                                   .Limit(pageSize)
                                    .ToListAsync(cancellationToken)
                                    .ConfigureAwait(false);
 
-            return new Page<TItem>(items, pageNumber, pageSize, totalItems);
+            return new(items, pageNumber, pageSize, totalItems);
         }
     }
 }

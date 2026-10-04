@@ -1,8 +1,11 @@
-﻿using Dotnet.Foundation.Abstractions.Requests;
+using Dotnet.Foundation.Abstractions.Requests;
 using System.Reflection;
 
 namespace Dotnet.Foundation.Implementations;
 
+/// <summary>
+/// Represents the request mediator implementing <see cref = "IRequestMediator" />, resolving the corresponding handlers from the service provider.
+/// </summary>
 public sealed class RequestMediator : IRequestMediator
 {
     private readonly IServiceProvider _serviceProvider;

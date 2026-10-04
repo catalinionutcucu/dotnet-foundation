@@ -3,8 +3,11 @@ using Dotnet.Foundation.Implementations;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
-namespace Dotnet.Foundation.Extensions;
+namespace Dotnet.Foundation.Extensions.Requests;
 
+/// <summary>
+/// Provides extension members for registering the request mediator implementing <see cref = "IRequestMediator" />.
+/// </summary>
 public static class RequestMediatorExtensions
 {
     extension(IServiceCollection serviceCollection)

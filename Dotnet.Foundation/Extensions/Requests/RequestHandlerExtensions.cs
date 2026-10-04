@@ -3,8 +3,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Scrutor;
 using System.Reflection;
 
-namespace Dotnet.Foundation.Extensions;
+namespace Dotnet.Foundation.Extensions.Requests;
 
+/// <summary>
+/// Provides extension members for registering the request handlers implementing <see cref = "IRequestHandler{TRequest,TResult}" /> or <see cref = "IRequestHandler{TRequest}" />.
+/// </summary>
 public static class RequestHandlerExtensions
 {
     extension(IServiceCollection serviceCollection)
@@ -13,12 +16,13 @@ public static class RequestHandlerExtensions
         /// Registers the request handlers implementing <see cref = "IRequestHandler{TRequest,TResult}" /> or <see cref = "IRequestHandler{TRequest}" /> to the service collection.
         /// </summary>
         /// <returns>The service collection.</returns>
+        /// <exception cref = "InvalidOperationException">A request has no request handler or multiple request handlers.</exception>
         public IServiceCollection AddRequestHandlers(Assembly assembly)
         {
             ArgumentNullException.ThrowIfNull(serviceCollection);
             ArgumentNullException.ThrowIfNull(assembly);
 
-            EnsureRequestsHaveMatchingRequestHandlers(assembly);
+            GuardAgainstRequestsWithNoOrMultipleRequestHandlers(assembly);
 
             serviceCollection.Scan(scan => scan.FromAssemblies(assembly)
                                                .AddClasses(filter => filter.AssignableTo(typeof(IRequestHandler<,>)), false)
@@ -40,7 +44,7 @@ public static class RequestHandlerExtensions
         }
     }
 
-    private static void EnsureRequestsHaveMatchingRequestHandlers(Assembly assembly)
+    private static void GuardAgainstRequestsWithNoOrMultipleRequestHandlers(Assembly assembly)
     {
         var assemblyTypes = assembly.GetTypes();
 
@@ -63,10 +67,10 @@ public static class RequestHandlerExtensions
             }
         }
 
-        var requestTypesWithNoRequestHandler = requestTypes.Where(requestType => !requestTypesWithRequestHandler.Any(requestType1 => requestType1 == requestType))
+        var requestTypesWithNoRequestHandler = requestTypes.Where(requestType => !requestTypesWithRequestHandler.Contains(requestType))
                                                            .ToList();
 
-        var requestTypesWithMultipleRequestHandlers = requestTypes.Where(requestType => requestTypesWithRequestHandler.Count(requestType1 => requestType1 == requestType) > 1)
+        var requestTypesWithMultipleRequestHandlers = requestTypes.Where(requestType => requestTypesWithRequestHandler.Count(requestTypeWithRequestHandler => requestTypeWithRequestHandler == requestType) > 1)
                                                                   .ToList();
 
         if (requestTypesWithNoRequestHandler.Any())
