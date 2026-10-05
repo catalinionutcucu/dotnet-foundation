@@ -1,10 +1,12 @@
 namespace Dotnet.Foundation.Abstractions;
 
 /// <summary>
-/// Defines a result of type <typeparamref name = "TResult" /> that can be created as a failure result with an error of type <typeparamref name = "TError" />.
+/// Defines a result of type <typeparamref name = "TResult" /> that can be a failure result with an error of type <typeparamref name = "TError" />.
 /// </summary>
 public interface IFailureResult<TResult, TError>
 {
+    public bool IsFailure { get; }
+
     /// <summary>
     /// Creates a <typeparamref name = "TResult" /> instance representing a failure result.
     /// </summary>

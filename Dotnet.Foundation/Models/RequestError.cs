@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json.Serialization;
 
 namespace Dotnet.Foundation.Models;
 
@@ -13,14 +14,14 @@ public sealed class RequestError
 
     public ImmutableArray<string> Issues { get; }
 
-    private RequestError(RequestErrorType type, string code, params IEnumerable<string> issues)
+    [JsonConstructor]
+    private RequestError(RequestErrorType type, string code, ImmutableArray<string> issues)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(code);
-        ArgumentNullException.ThrowIfNull(issues);
 
         Type = type;
         Code = code;
-        Issues = [ ..issues ];
+        Issues = issues.IsDefault ? [ ] : issues;
     }
 
     /// <summary>
@@ -29,7 +30,9 @@ public sealed class RequestError
     /// <returns>A <see cref = "RequestError" /> instance representing a request invalid error.</returns>
     public static RequestError RequestInvalid(string code, params IEnumerable<string> issues)
     {
-        return new(RequestErrorType.RequestInvalid, code, issues);
+        ArgumentNullException.ThrowIfNull(issues);
+
+        return new(RequestErrorType.RequestInvalid, code, [ ..issues ]);
     }
 
     /// <summary>
@@ -38,7 +41,9 @@ public sealed class RequestError
     /// <returns>A <see cref = "RequestError" /> instance representing a request not allowed error.</returns>
     public static RequestError RequestNotAllowed(string code, params IEnumerable<string> issues)
     {
-        return new(RequestErrorType.RequestNotAllowed, code, issues);
+        ArgumentNullException.ThrowIfNull(issues);
+
+        return new(RequestErrorType.RequestNotAllowed, code, [ ..issues ]);
     }
 
     /// <summary>
@@ -47,7 +52,9 @@ public sealed class RequestError
     /// <returns>A <see cref = "RequestError" /> instance representing a resource not found error.</returns>
     public static RequestError ResourceNotFound(string code, params IEnumerable<string> issues)
     {
-        return new(RequestErrorType.ResourceNotFound, code, issues);
+        ArgumentNullException.ThrowIfNull(issues);
+
+        return new(RequestErrorType.ResourceNotFound, code, [ ..issues ]);
     }
 
     /// <summary>
@@ -56,7 +63,9 @@ public sealed class RequestError
     /// <returns>A <see cref = "RequestError" /> instance representing a resource conflict error.</returns>
     public static RequestError ResourceConflict(string code, params IEnumerable<string> issues)
     {
-        return new(RequestErrorType.ResourceConflict, code, issues);
+        ArgumentNullException.ThrowIfNull(issues);
+
+        return new(RequestErrorType.ResourceConflict, code, [ ..issues ]);
     }
 }
 
