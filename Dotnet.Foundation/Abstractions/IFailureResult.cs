@@ -7,6 +7,8 @@ public interface IFailureResult<TResult, TError>
 {
     public bool IsFailure { get; }
 
+    public TError Error { get; }
+
     /// <summary>
     /// Creates a <typeparamref name = "TResult" /> instance representing a failure result.
     /// </summary>
