@@ -24,9 +24,7 @@ public static class OutboxExtensions
 
             serviceCollection.AddOptions<OutboxOptions>()
                              .Configure(outboxOptions => configureOptions?.Invoke(outboxOptions))
-                             .Validate(outboxOptions => outboxOptions.Interval > TimeSpan.Zero && outboxOptions.BatchSize > 0 && outboxOptions.MaxAttempts > 0, "The interval, batch size and max attempts of the outbox options must be positive.")
-                             .Validate(outboxOptions => outboxOptions.RetryDelay > TimeSpan.Zero && outboxOptions.MaxRetryDelay >= outboxOptions.RetryDelay, "The retry delay of the outbox options must be positive and not greater than the max retry delay.")
-                             .Validate(outboxOptions => outboxOptions.ClaimDuration > TimeSpan.Zero && outboxOptions.RetentionPeriod > TimeSpan.Zero, "The claim duration and retention period of the outbox options must be positive.")
+                             .Validate(outboxOptions => outboxOptions.PollingInterval > TimeSpan.Zero && outboxOptions.BatchSize > 0 && outboxOptions.MaxAttempts > 0 && outboxOptions.RetryDelay > TimeSpan.Zero, "The polling interval, batch size, max attempts and retry delay of the outbox options must be positive.")
                              .ValidateOnStart();
 
             serviceCollection.AddSingleton(TimeProvider.System);
@@ -52,9 +50,6 @@ public static class OutboxExtensions
             modelBuilder.Entity<OutboxMessage>(entityTypeBuilder =>
             {
                 entityTypeBuilder.HasKey(outboxMessage => outboxMessage.Id);
-
-                entityTypeBuilder.Property(outboxMessage => outboxMessage.Version)
-                                 .IsConcurrencyToken();
 
                 entityTypeBuilder.PrimitiveCollection(outboxMessage => outboxMessage.CompletedHandlers);
 

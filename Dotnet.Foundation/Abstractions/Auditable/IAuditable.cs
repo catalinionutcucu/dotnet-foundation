@@ -1,4 +1,4 @@
-namespace Dotnet.Foundation.Abstractions;
+namespace Dotnet.Foundation.Abstractions.Auditable;
 
 /// <summary>
 /// Defines an entity with creation and update timestamps set when saving changes.

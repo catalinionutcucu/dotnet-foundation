@@ -23,8 +23,6 @@ public sealed class OutboxMessage
 
     public IReadOnlyList<string> CompletedHandlers { get; private set; } = [ ];
 
-    public Guid Version { get; private set; }
-
     public OutboxMessage(string type, string content, DateTimeOffset occurredAt)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(type);
@@ -34,23 +32,12 @@ public sealed class OutboxMessage
         Type = type;
         Content = content;
         OccurredAt = occurredAt;
-        Version = Guid.NewGuid();
-    }
-
-    /// <summary>
-    /// Claims the outbox message for processing until the specified time, counting the attempt.
-    /// </summary>
-    public void Claim(DateTimeOffset claimedUntil)
-    {
-        Attempts++;
-        NextAttemptAt = claimedUntil;
-        Version = Guid.NewGuid();
     }
 
     /// <summary>
     /// Marks the handler with the specified name as completed, so it is skipped when the outbox message is attempted again.
     /// </summary>
-    public void CompleteHandler(string handlerName)
+    public void MarkHandlerAsCompleted(string handlerName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(handlerName);
 
@@ -58,25 +45,25 @@ public sealed class OutboxMessage
     }
 
     /// <summary>
-    /// Marks the outbox message as processed at the specified time.
+    /// Marks the outbox message as processed at the specified time, counting the attempt.
     /// </summary>
     public void MarkAsProcessed(DateTimeOffset processedAt)
     {
+        Attempts++;
         ProcessedAt = processedAt;
         NextAttemptAt = null;
         Error = null;
-        Version = Guid.NewGuid();
     }
 
     /// <summary>
-    /// Marks the outbox message as failed with the specified error, to be attempted again at the specified time.
+    /// Marks the outbox message as failed with the specified error, counting the attempt, to be attempted again at the specified time.
     /// </summary>
     public void MarkAsFailed(string error, DateTimeOffset nextAttemptAt)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(error);
 
+        Attempts++;
         NextAttemptAt = nextAttemptAt;
         Error = error;
-        Version = Guid.NewGuid();
     }
 }

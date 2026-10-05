@@ -1,4 +1,4 @@
-using Dotnet.Foundation.Abstractions;
+using Dotnet.Foundation.Abstractions.SoftDeletable;
 using Dotnet.Foundation.Implementations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -8,7 +8,7 @@ using System.Linq.Expressions;
 namespace Dotnet.Foundation.Extensions;
 
 /// <summary>
-/// Provides extension members for registering the interceptor and applying the query filter for the entities implementing <see cref = "ISoftDeletable" />.
+/// Provides extension members for registering the interceptor and applying the query filter for the entities implementing <see cref = "ISoftDeletable" /> or <see cref = "IUserSoftDeletable" />.
 /// </summary>
 public static class SoftDeletableExtensions
 {
@@ -17,7 +17,7 @@ public static class SoftDeletableExtensions
     extension(IServiceCollection serviceCollection)
     {
         /// <summary>
-        /// Registers the interceptor setting the deletion timestamp of the entities implementing <see cref = "ISoftDeletable" /> instead of removing them to the service collection.
+        /// Registers the interceptor setting the deletion timestamp of the entities implementing <see cref = "ISoftDeletable" />, and the user deleting the entities implementing <see cref = "IUserSoftDeletable" />, instead of removing them to the service collection.
         /// </summary>
         /// <returns>The service collection.</returns>
         public IServiceCollection AddSoftDeletableInterceptor()
@@ -25,6 +25,8 @@ public static class SoftDeletableExtensions
             ArgumentNullException.ThrowIfNull(serviceCollection);
 
             serviceCollection.AddSingleton(TimeProvider.System);
+
+            serviceCollection.AddCurrentUser();
 
             serviceCollection.AddSingleton<ISaveChangesInterceptor, SoftDeletableInterceptor>();
 

@@ -38,7 +38,7 @@ public sealed class OutboxProcessor<TDbContext> : BackgroundService
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var periodicTimer = new PeriodicTimer(_outboxOptions.Interval, _timeProvider);
+        using var periodicTimer = new PeriodicTimer(_outboxOptions.PollingInterval, _timeProvider);
 
         do
         {
@@ -51,8 +51,6 @@ public sealed class OutboxProcessor<TDbContext> : BackgroundService
                     outboxMessageCount = await ProcessOutboxMessagesAsync(stoppingToken).ConfigureAwait(false);
                 }
                 while (outboxMessageCount == _outboxOptions.BatchSize);
-
-                await DeleteProcessedOutboxMessagesAsync(stoppingToken).ConfigureAwait(false);
             }
             catch (Exception exception) when (!stoppingToken.IsCancellationRequested)
             {
@@ -84,31 +82,10 @@ public sealed class OutboxProcessor<TDbContext> : BackgroundService
 
         foreach (var outboxMessage in outboxMessages)
         {
-            if (await TryClaimOutboxMessageAsync(dbContext, outboxMessage, cancellationToken).ConfigureAwait(false))
-            {
-                await ProcessOutboxMessageAsync(dbContext, outboxMessage, cancellationToken).ConfigureAwait(false);
-            }
+            await ProcessOutboxMessageAsync(dbContext, outboxMessage, cancellationToken).ConfigureAwait(false);
         }
 
         return outboxMessages.Count;
-    }
-
-    private async Task<bool> TryClaimOutboxMessageAsync(TDbContext dbContext, OutboxMessage outboxMessage, CancellationToken cancellationToken)
-    {
-        outboxMessage.Claim(_timeProvider.GetUtcNow() + _outboxOptions.ClaimDuration);
-
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-            return true;
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            dbContext.Entry(outboxMessage).State = EntityState.Detached;
-
-            return false;
-        }
     }
 
     private async Task ProcessOutboxMessageAsync(TDbContext dbContext, OutboxMessage outboxMessage, CancellationToken cancellationToken)
@@ -129,51 +106,28 @@ public sealed class OutboxProcessor<TDbContext> : BackgroundService
             {
                 await domainEventHandler.HandleAsync(cancellationToken).ConfigureAwait(false);
 
-                outboxMessage.CompleteHandler(domainEventHandler.Name);
+                outboxMessage.MarkHandlerAsCompleted(domainEventHandler.Name);
             }
 
             outboxMessage.MarkAsProcessed(_timeProvider.GetUtcNow());
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
-            if (outboxMessage.Attempts < _outboxOptions.MaxAttempts)
+            var attempt = outboxMessage.Attempts + 1;
+
+            if (attempt < _outboxOptions.MaxAttempts)
             {
-                _logger.LogWarning(exception, "An exception occurred while processing the outbox message '{OutboxMessageId}' on attempt {Attempt} of {MaxAttempts}.", outboxMessage.Id, outboxMessage.Attempts, _outboxOptions.MaxAttempts);
+                _logger.LogWarning(exception, "An exception occurred while processing the outbox message '{OutboxMessageId}' on attempt {Attempt} of {MaxAttempts}.", outboxMessage.Id, attempt, _outboxOptions.MaxAttempts);
             }
             else
             {
                 _logger.LogError(exception, "An exception occurred while processing the outbox message '{OutboxMessageId}' on the last attempt of {MaxAttempts}.", outboxMessage.Id, _outboxOptions.MaxAttempts);
             }
 
-            var retryDelay = TimeSpan.FromTicks((long)Math.Min(_outboxOptions.RetryDelay.Ticks * Math.Pow(2, outboxMessage.Attempts - 1), _outboxOptions.MaxRetryDelay.Ticks));
-
-            outboxMessage.MarkAsFailed(exception.ToString(), _timeProvider.GetUtcNow() + retryDelay);
+            outboxMessage.MarkAsFailed(exception.ToString(), _timeProvider.GetUtcNow() + _outboxOptions.RetryDelay * Math.Pow(2, attempt - 1));
         }
 
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            _logger.LogWarning("The claim on the outbox message '{OutboxMessageId}' expired before the message was processed.", outboxMessage.Id);
-
-            dbContext.Entry(outboxMessage).State = EntityState.Detached;
-        }
-    }
-
-    private async Task DeleteProcessedOutboxMessagesAsync(CancellationToken cancellationToken)
-    {
-        using var serviceScope = _serviceScopeFactory.CreateScope();
-
-        var dbContext = serviceScope.ServiceProvider.GetRequiredService<TDbContext>();
-
-        var processedBefore = _timeProvider.GetUtcNow() - _outboxOptions.RetentionPeriod;
-
-        await dbContext.Set<OutboxMessage>()
-                       .Where(outboxMessage => outboxMessage.ProcessedAt != null && outboxMessage.ProcessedAt < processedBefore)
-                       .ExecuteDeleteAsync(cancellationToken)
-                       .ConfigureAwait(false);
+        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private static DomainEventHandlersResolver CreateDomainEventHandlersResolver(Type domainEventType)
